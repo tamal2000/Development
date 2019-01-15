@@ -11,4 +11,8 @@ ourArray.push(10);
 ourArray.pop(); 
 //delete first element from array
 ourArray.shift()
+//add elemet on the top of array 
+outArray.unshift(10);
+
+## Function ##
 
