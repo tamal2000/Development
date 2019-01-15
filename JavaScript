@@ -1,0 +1,14 @@
+// JavaScript
+
+## Array ##
+//declear array: 
+var ourArray = [1,2,3];
+//change value:
+ourArray[0] = 1:
+//append value:
+ourArray.push(10); 
+//Delete last element from array 
+ourArray.pop(); 
+//delete first element from array
+ourArray.shift()
+
