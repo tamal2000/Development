@@ -1,0 +1,149 @@
+####### Ethereum Coding ##########
+
+## Comments -- like JavaScript ##
+//, /* commented text */ 
+
+## Variable Types and assign value ##
+# boolian #
+bool: values - True or false 
+Operators: ! (logical negation), && (logical conjunction, “and”), || (logical disjunction, “or”)
+== (equality), != (inequality)
+
+# Integers #
+int - signed integers 
+uint - unsigned integers
+forms: int8 to int256, uint8 to uint256 
+Operators:
+Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
+Bit operators: &, |, ^ (bitwise exclusive or), ~ (bitwise negation)Bit operations are performed on the two’s complement representation of the number. This means that, for example ~int256(0) == int256(-1).
+Shift operators: << (left shift), >> (right shift) The result of a shift operation has the type of the left operand. The expression x << y is equivalent to x * 2**y, and, for positive integers, x >> y is equivalent to x / 2**y. For negative x, x >> y is equivalent to dividing by a power of 2 while rounding down (towards negative infinity)
+Arithmetic operators: +, -, unary -, *, /, % (modulo), ** (exponentiation)
+
+# Fixed Point Numbers # 
+What is Fixed point: The value 1.23 can be represented as 1230 in a fixed-point data type with scaling factor of 1/1000, and the value 1,230,000 can be represented as 1230 with a scaling factor of 1000.
+fixed / ufixed: Signed and unsigned fixed point number of various sizes. 
+ufixedMxN and fixedMxN, where M represents the number of bits taken by the type and N represents how many decimal points are available
+Operators:
+Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
+Arithmetic operators: +, -, unary -, *, /, % (modulo)
+
+# Address #
+address: Holds a 20 byte value (size of an Ethereum address)
+address payable: Same as address, but with the additional members transfer and send 
+address payable to address are allowed, whereas conversions from address to address payable are not possible
+Operators: <=, <, ==, !=, >= and >
+.balance and .transfer
+Example: 
+address payable x = address(0x123);
+address myAddress = address(this);
+if (x.balance < 10 && myAddress.balance >= 10) x.transfer(10);
+.call, .delegatecall and .staticcall
+all take a single bytes memory parameter and return the success condition (as a bool) and the returned data (bytes memory). The functions abi.encode, abi.encodePacked, abi.encodeWithSelector and abi.encodeWithSignature can be used to encode structured data.
+
+It is possible to adjust the supplied gas with the .gas() modifier:
+address(nameReg).call.gas(1000000)(abi.encodeWithSignature("register(string)", "MyName"));
+
+Similarly, the supplied Ether value can be controlled too:
+address(nameReg).call.value(1 ether)(abi.encodeWithSignature("register(string)", "MyName"));
+
+Lastly, these modifiers can be combined. Their order does not matter:
+address(nameReg).call.gas(1000000).value(1 ether)(abi.encodeWithSignature("register(string)", "MyName"));
+
+# arrays #
+The type of an array of fixed size k and element type T is written as T[k], and an array of dynamic size as T[].
+an array of 5 dynamic arrays of uint is written as uint[][5]
+Indices are zero-based, and access is in the opposite direction of the declaration.
+m_byteData[3] = 0x08;
+
+.push() method to append a new element at the end or assign to the 
+m_pairsOfFlags.push(flag);
+.length member to change the size. method or increase the .length member to add elements.
+ m_pairsOfFlags.length = newSize;
+ pop that you can use to remove an element from the end of the array
+t is possible to mark arrays public and have Solidity create a getter. 
+new keyword to create arrays with a runtime-dependent length in memory. 
+uint[2][] memory arrayOfPairs = new uint[2][](size);
+delete on each of the removed elements. 
+ delete m_byteData[2];
+Operators:
+Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
+Bit operators: &, |, ^ (bitwise exclusive or), ~ (bitwise negation)
+Shift operators: << (left shift), >> (right shift)
+Index access: If x is of type bytesI, then x[k] for 0 <= k < I returns the k th byte (read-only).
+
+
+# String #
+String literals are written with either double or single-quotes ("foo" or 'bar').
+String literals support the following escape characters:
+\<newline> (escapes an actual newline)
+\\ (backslash), \' (single quote), \" (double quote), \b (backspace), \f (form feed)
+\n (newline), \r (carriage return), \t (tab), \v (vertical tab), \xNN (hex escape, see below)
+\uNNNN (unicode escape, see below)
+
+
+# Hexadecimal  #
+Hexadecimal literals are prefixed with the keyword hex and are enclosed in double or single-quotes (hex"001122FF"). 
+
+# Enums #
+Enums are one way to create a user-defined type in Solidity. 
+Example: 
+ enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
+ ActionChoices choice;
+ ActionChoices constant defaultChoice = ActionChoices.GoStraight;
+ 
+ ######## Funtion Types ####### 
+ function (<parameter types>) {internal|external} [pure|view|payable] [returns (<return types>)]
+ 
+ Function types come in two flavours - internal and external functions 
+ Internal functions can only be called inside the current contract. 
+ External functions consist of an address and a function signature and they can be passed via and returned from external function calls.
+ A value of external function type can be explicitly converted to address resulting in the address of the contract of the function.
+ 
+ if a function is payable, this means that it also accepts a payment of zero Ether, so it also is non-payable. On the other hand, a non-payable function will reject Ether sent to it.
+ 
+
+Public (or external) functions also have a special member called selector, which returns the ABI function selector:
+
+pragma solidity >=0.4.16 <0.6.0;
+
+contract Selector {
+  function f() public pure returns (bytes4) {
+    return this.f.selector;
+  }
+}
+
+##### Reference ######
+Reference types comprise structs, arrays and mappings
+
+A reference type explicitly provide the data area where the type is stored: 
+memory: whose lifetime is limited to a function call, 
+storage: the location where the state variables are stored
+calldata: special data location that contains the function arguments, only available for external function call parameters
+
+Every reference type, i.e. arrays and structs, has an additional annotation, the “data location”, about where it is stored. 
+There are three data locations: memory, storage and calldata.
+ 
+Assignments between storage and memory (or from calldata) always create an independent copy.
+Assignments from memory to memory only create references. This means that changes to one memory variable are also visible in all other memory variables that refer to the same data.
+Assignments from storage to a local storage variable also only assign a reference.
+All other assignments to storage always copy. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
