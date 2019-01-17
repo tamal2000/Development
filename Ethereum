@@ -14,6 +14,8 @@ import "github.com/ethereum/dapp-bin/library/iterable_mapping.sol" as it_mapping
 //, /* commented text */ 
 
 ## Variable Types and assign value ##
+For public state variables, an automatic getter function is generated. 
+
 # boolian #
 bool: values - True or false 
 Operators: ! (logical negation), && (logical conjunction, “and”), || (logical disjunction, “or”)
@@ -162,41 +164,48 @@ In contrast, --a and ++a have the same effect on a but return the value after th
  # Conversions #
  
 ## Contract ## 
-Contracts in Solidity are similar to classes. 
-Contracts can be created “from outside” via Ethereum transactions or from within Solidity contracts.
-Each contract can contain declarations of State Variables, Functions, Function Modifiers, Events, Struct Types and Enum Types.
-Contracts can inherit from other contracts.
+Class:Contracts in Solidity are similar to classes. 
+Contents: They contain persistent data in state variables and functions that can modify these variables.Each contract can contain declarations of State Variables, Functions, Function Modifiers, Events, Struct Types and Enum Types.
+Inherit: Contracts can inherit from other contracts.
+Creation: Contracts can be created “from outside” via Ethereum transactions or from within Solidity contracts.
+Constructor: When a contract is created, its function constructor is executed once.(onstructor is optional. one constructor is allowed)
+Deployment: This code includes all public and external functions and all functions that are reachable from there through function calls. The deployed code does not include the constructor code or internal functions only called from the constructor.
 
 There are also special kinds of contracts called 
 libraries 
 interfaces
+
+# Visibility and Getters #
+
+######## Funtion Types ####### 
 Functions are the executable units of code within a contract.
  
-# 
- public:Public functions are part of the contract interface and can be either called internally or via messages. For public state variables, an automatic getter function (see below) is generated.
- 
- ######## Funtion Types ####### 
- 
- function (<parameter types>) {internal|external} [pure|view|payable] [returns (<return types>)]
+function (<parameter types>) {internal|external} [pure|view|payable] [returns (<return types>)]
 
- 
- Function types come in two flavours - internal and external functions 
- Internal functions can only be called inside the current contract. 
- External functions consist of an address and a function signature and they can be passed via and returned from external function calls.
- A value of external function type can be explicitly converted to address resulting in the address of the contract of the function.
- 
- if a function is payable, this means that it also accepts a payment of zero Ether, so it also is non-payable. On the other hand, a non-payable function will reject Ether sent to it.
- 
+Using pure and view functions allows these functions to consume zero gas, because they are not modifying state. 
+- View: view if your function does not modify storage
+- Pure: In Solidity pure functions are functions, that are promised not to modify or read the state.
+- Payable: if a function is payable, this means that it also accepts a payment of zero Ether, a non-payable function will reject Ether sent to it.
 
-Public (or external) functions also have a special member called selector, which returns the ABI function selector:
+Functions have to be specified as being external, public, internal or private 
+- private:Private functions are only visible for the contract they are defined in and not in derived contracts.
+- internal: functions can only be accessed internally, without using this.
+- external: External functions are part of the contract interface, which means they can be called from other contracts and via transactions. An external function f cannot be called internally (i.e. f() does not work, but this.f() works). External functions are sometimes more efficient when they receive large arrays of data.
+- Public: public:
+Public functions are part of the contract interface and can be either called internally or via messages. For public state variables, an automatic getter function (see below) is generated.
+-Selector: Public functions also have a special member called selector, which returns the ABI function selector
 
 pragma solidity >=0.4.16 <0.6.0;
-
 contract Selector {
   function f() public pure returns (bytes4) {
     return this.f.selector;
   }
 }
+
+
+
+
+
 
 
 
