@@ -1,5 +1,15 @@
 ####### Ethereum Coding ##########
 
+## Version declaration ## 
+pragma solidity ^0.4.0; 
+
+## Import ## 
+At a global level, import statements of the following form:
+import "filename";
+import * as symbolName from "filename";
+import "github.com/ethereum/dapp-bin/library/iterable_mapping.sol" as it_mapping;
+
+
 ## Comments -- like JavaScript ##
 //, /* commented text */ 
 
@@ -19,6 +29,14 @@ Bit operators: &, |, ^ (bitwise exclusive or), ~ (bitwise negation)Bit operation
 Shift operators: << (left shift), >> (right shift) The result of a shift operation has the type of the left operand. The expression x << y is equivalent to x * 2**y, and, for positive integers, x >> y is equivalent to x / 2**y. For negative x, x >> y is equivalent to dividing by a power of 2 while rounding down (towards negative infinity)
 Arithmetic operators: +, -, unary -, *, /, % (modulo), ** (exponentiation)
 
+# String #
+String literals are written with either double or single-quotes ("foo" or 'bar').
+String literals support the following escape characters:
+\<newline> (escapes an actual newline)
+\\ (backslash), \' (single quote), \" (double quote), \b (backspace), \f (form feed)
+\n (newline), \r (carriage return), \t (tab), \v (vertical tab), \xNN (hex escape, see below)
+\uNNNN (unicode escape, see below)
+
 # Fixed Point Numbers # 
 What is Fixed point: The value 1.23 can be represented as 1230 in a fixed-point data type with scaling factor of 1/1000, and the value 1,230,000 can be represented as 1230 with a scaling factor of 1000.
 fixed / ufixed: Signed and unsigned fixed point number of various sizes. 
@@ -26,6 +44,9 @@ ufixedMxN and fixedMxN, where M represents the number of bits taken by the type 
 Operators:
 Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
 Arithmetic operators: +, -, unary -, *, /, % (modulo)
+
+# Hexadecimal  #
+Hexadecimal literals are prefixed with the keyword hex and are enclosed in double or single-quotes (hex"001122FF"). 
 
 # Address #
 address: Holds a 20 byte value (size of an Ethereum address)
@@ -49,6 +70,13 @@ address(nameReg).call.value(1 ether)(abi.encodeWithSignature("register(string)",
 Lastly, these modifiers can be combined. Their order does not matter:
 address(nameReg).call.gas(1000000).value(1 ether)(abi.encodeWithSignature("register(string)", "MyName"));
 
+# Enums #
+Enums are one way to create a user-defined type in Solidity. 
+Example: 
+ enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
+ ActionChoices choice;
+ ActionChoices constant defaultChoice = ActionChoices.GoStraight;
+
 # arrays #
 The type of an array of fixed size k and element type T is written as T[k], and an array of dynamic size as T[].
 an array of 5 dynamic arrays of uint is written as uint[][5]
@@ -59,40 +87,98 @@ m_byteData[3] = 0x08;
 m_pairsOfFlags.push(flag);
 .length member to change the size. method or increase the .length member to add elements.
  m_pairsOfFlags.length = newSize;
- pop that you can use to remove an element from the end of the array
-t is possible to mark arrays public and have Solidity create a getter. 
+pop that you can use to remove an element from the end of the array
+It is possible to mark arrays public and have Solidity create a getter. 
 new keyword to create arrays with a runtime-dependent length in memory. 
 uint[2][] memory arrayOfPairs = new uint[2][](size);
 delete on each of the removed elements. 
  delete m_byteData[2];
+
 Operators:
 Comparisons: <=, <, ==, !=, >=, > (evaluate to bool)
 Bit operators: &, |, ^ (bitwise exclusive or), ~ (bitwise negation)
 Shift operators: << (left shift), >> (right shift)
 Index access: If x is of type bytesI, then x[k] for 0 <= k < I returns the k th byte (read-only).
 
+# Structs #
+Solidity provides a way to define new types in the form of structs
+    
+    struct Funder {
+        address addr;
+        uint amount;
+    }
 
-# String #
-String literals are written with either double or single-quotes ("foo" or 'bar').
-String literals support the following escape characters:
-\<newline> (escapes an actual newline)
-\\ (backslash), \' (single quote), \" (double quote), \b (backspace), \f (form feed)
-\n (newline), \r (carriage return), \t (tab), \v (vertical tab), \xNN (hex escape, see below)
-\uNNNN (unicode escape, see below)
+    struct Campaign {
+        address payable beneficiary;
+        uint fundingGoal;
+        uint numFunders;
+        uint amount;
+        mapping (uint => Funder) funders;
+    }
+ Struct types can be used inside mappings and arrays and they can itself contain mappings and arrays.
+ directly access the members of the struct without assigning it to a local variable, as in campaigns[campaignID].amount = 0.
 
+##### Reference ######
+Reference types comprise structs, arrays and mappings
 
-# Hexadecimal  #
-Hexadecimal literals are prefixed with the keyword hex and are enclosed in double or single-quotes (hex"001122FF"). 
+A reference type explicitly provide the data area where the type is stored: 
+memory: whose lifetime is limited to a function call, 
+storage: the location where the state variables are stored
+calldata: special data location that contains the function arguments, only available for external function call parameters
 
-# Enums #
-Enums are one way to create a user-defined type in Solidity. 
-Example: 
- enum ActionChoices { GoLeft, GoRight, GoStraight, SitStill }
- ActionChoices choice;
- ActionChoices constant defaultChoice = ActionChoices.GoStraight;
+Every reference type, i.e. arrays and structs, has an additional annotation, the “data location”, about where it is stored. 
+There are three data locations: memory, storage and calldata.
+ 
+Assignments between storage and memory (or from calldata) always create an independent copy.
+Assignments from memory to memory only create references. This means that changes to one memory variable are also visible in all other memory variables that refer to the same data.
+Assignments from storage to a local storage variable also only assign a reference.
+All other assignments to storage always copy.  
+
+# Mapping # 
+Mapping is like Hash table. 
+key data is not stored in a mapping, only its keccak256 hash is used to look up the value.
+Mappings do not have a length or a concept of a key or value being set.
+
+Mapping types with the syntax mapping(_KeyType => _ValueType). 
+_KeyType can be any elementary type like built-in value types plus bytes and string, contract, enums, mappings, structs and array. 
+_ValueType can be any type, including mappings.
+Mappings can only have a data location of storage
+For mapping type as public and Solidity creates a getter
+_KeyType becomes a parameter for the getter. 
+If _ValueType is a value type or a struct, the getter returns _ValueType. 
+If _ValueType is an array or a mapping, the getter has one parameter for each _KeyType,
+
+# Operator #
+a += e is equivalent to a = a + e. 
+The operators -=, *=, /=, %=, |=, &= and ^= are defined accordingly. 
+a++ and a-- are equivalent to a += 1 / a -= 1 but the expression itself still has the previous value of a. 
+In contrast, --a and ++a have the same effect on a but return the value after the change.
+
+# Delete #
+
+        delete x; // sets x to 0, does not affect data
+        delete data; // sets data to 0, does not affect x
+        
+ # Conversions #
+ 
+## Contract ## 
+Contracts in Solidity are similar to classes. 
+Contracts can be created “from outside” via Ethereum transactions or from within Solidity contracts.
+Each contract can contain declarations of State Variables, Functions, Function Modifiers, Events, Struct Types and Enum Types.
+Contracts can inherit from other contracts.
+
+There are also special kinds of contracts called 
+libraries 
+interfaces
+Functions are the executable units of code within a contract.
+ 
+# 
+ public:Public functions are part of the contract interface and can be either called internally or via messages. For public state variables, an automatic getter function (see below) is generated.
  
  ######## Funtion Types ####### 
+ 
  function (<parameter types>) {internal|external} [pure|view|payable] [returns (<return types>)]
+
  
  Function types come in two flavours - internal and external functions 
  Internal functions can only be called inside the current contract. 
@@ -112,21 +198,7 @@ contract Selector {
   }
 }
 
-##### Reference ######
-Reference types comprise structs, arrays and mappings
 
-A reference type explicitly provide the data area where the type is stored: 
-memory: whose lifetime is limited to a function call, 
-storage: the location where the state variables are stored
-calldata: special data location that contains the function arguments, only available for external function call parameters
-
-Every reference type, i.e. arrays and structs, has an additional annotation, the “data location”, about where it is stored. 
-There are three data locations: memory, storage and calldata.
- 
-Assignments between storage and memory (or from calldata) always create an independent copy.
-Assignments from memory to memory only create references. This means that changes to one memory variable are also visible in all other memory variables that refer to the same data.
-Assignments from storage to a local storage variable also only assign a reference.
-All other assignments to storage always copy. 
 
 
 
