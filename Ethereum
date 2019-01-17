@@ -168,6 +168,12 @@ For mapping type as public and Solidity creates a getter
 _KeyType becomes a parameter for the getter. 
 If _ValueType is a value type or a struct, the getter returns _ValueType. 
 If _ValueType is an array or a mapping, the getter has one parameter for each _KeyType,
+The mapping or the dynamic array itself occupies a slot in storage at some position p
+
+Mapping and dynamically-sized array types use a Keccak-256 hash computation to find the starting position of the value or the array data. 
+These starting positions are always full stack slots.
+Array data is located at keccak256(p)
+the value corresponding to a mapping key k is located at keccak256(k . p) where . is concatenation
 
 # Operator #
 a += e is equivalent to a = a + e. 
@@ -343,6 +349,18 @@ The constructors of all the base contracts will be called following the lineariz
 
 pragma solidity >=0.4.22 <0.6.0;
 
+contract testGlobalFunction{
+    
+    
+    constructor () public{
+        //code
+        
+    }
+    
+}
+
+pragma solidity >=0.4.22 <0.6.0;
+
 contract Base {
     uint x;
     constructor(uint _x) public { x = _x; }
@@ -367,15 +385,128 @@ bytes32 constant public myHash = keccak256("abc"); //hasing
 if (msg.sender == owner) selfdestruct(owner);
 
 
+########## Units and Globally Available Variables ########################
+#Ether Units: A literal number can take a suffix of wei, finney, szabo or ether to specify a subdenomination of Ether, where Ether numbers without a postfix are assumed to be Wei.
+
+assert(1 wei == 1);
+assert(1 szabo == 1e12);
+assert(1 finney == 1e15);
+assert(1 ether == 1e18);
+
+#Time Units
+Suffixes like seconds, minutes, hours, days and weeks after literal numbers can be used to specify units of time where seconds are the base unit and units are considered naively in the following way:
+
+1 == 1 seconds
+1 minutes == 60 seconds
+1 hours == 60 minutes
+1 days == 24 hours
+1 weeks == 7 days
+
+function f(uint start, uint daysAfter) public {
+    if (now >= start + daysAfter * 1 days) {
+      // ...
+    }
+}
+
+# Block and Transaction Properties #
+
+blockhash(uint blockNumber) returns (bytes32): hash of the given block - only works for 256 most recent, excluding current, blocks
+block.coinbase (address payable): current block miner’s address
+block.difficulty (uint): current block difficulty
+block.gaslimit (uint): current block gaslimit
+block.number (uint): current block number
+block.timestamp (uint): current block timestamp as seconds since unix epoch
+gasleft() returns (uint256): remaining gas
+msg.data (bytes calldata): complete calldata
+msg.sender (address payable): sender of the message (current call)
+msg.sig (bytes4): first four bytes of the calldata (i.e. function identifier)
+msg.value (uint): number of wei sent with the message
+now (uint): current block timestamp (alias for block.timestamp)
+tx.gasprice (uint): gas price of the transaction
+tx.origin (address payable): sender of the transaction (full call chain)
+
+pragma solidity >=0.4.22 <0.6.0;
+
+contract testGlobalFunction{
+    
+    struct GlobalFunction{
+        address coinbase; 
+        uint difficulty; 
+        uint gasLimit; 
+        uint blockNumber; 
+        uint timeStamp; 
+        bytes data; 
+        address sender; 
+        bytes4 signature; 
+        uint value; 
+        uint currentTime; 
+        uint gasPrice;
+        address origin; 
+    }
+    
+    GlobalFunction[] public Global; 
+    
+    constructor () public payable{
+    
+        GlobalFunction memory newGlobal = GlobalFunction({
+            coinbase: block.coinbase,
+            difficulty: block.difficulty, 
+            gasLimit: block.gaslimit, 
+            blockNumber: block.number, 
+            timeStamp: block.timestamp, 
+            data: msg.data,
+            sender: msg.sender,
+            signature: msg.sig,
+            value: msg.value,
+            currentTime: now, 
+            gasPrice: tx.gasprice, 
+            origin: tx.origin
+        });
+        
+        Global.push(newGlobal);    
+        
+        
+    }
+}
 
 
+# Error Handling #
+See the dedicated section on assert and require for more details on error handling and when to use which function.
 
+assert(bool condition):
+causes an invalid opcode and thus state change reversion if the condition is not met - to be used for internal errors.
 
+require(bool condition):
+reverts if the condition is not met - to be used for errors in inputs or external components.
+require(bool condition, string memory message):
+reverts if the condition is not met - to be used for errors in inputs or external components. Also provides an error message.
 
+revert():
+abort execution and revert state changes
+revert(string memory reason):
+abort execution and revert state changes, providing an explanatory string
 
+# Mathematical and Cryptographic Functions #
 
+addmod(uint x, uint y, uint k) returns (uint):
+compute (x + y) % k where the addition is performed with arbitrary precision and does not wrap around at 2**256. Assert that k != 0 starting from version 0.5.0.
+mulmod(uint x, uint y, uint k) returns (uint):
+compute (x * y) % k where the multiplication is performed with arbitrary precision and does not wrap around at 2**256. Assert that k != 0 starting from version 0.5.0.
+keccak256(bytes memory) returns (bytes32):
+compute the Keccak-256 hash of the input
+sha256(bytes memory) returns (bytes32):
+compute the SHA-256 hash of the input
+ripemd160(bytes memory) returns (bytes20):
+compute RIPEMD-160 hash of the input
+ecrecover(bytes32 hash, uint8 v, bytes32 r, bytes32 s) returns (address):
 
-
+# Members of Address Types #
+<address>.balance (uint256):
+<address payable>.transfer(uint256 amount):
+<address payable>.send(uint256 amount) returns (bool):
+<address>.call(bytes memory) returns (bool, bytes memory):
+<address>.delegatecall(bytes memory) returns (bool, bytes memory):
+<address>.staticcall(bytes memory) returns (bool, bytes memory):
 
 
 
