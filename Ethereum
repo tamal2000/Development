@@ -15,6 +15,7 @@ import "github.com/ethereum/dapp-bin/library/iterable_mapping.sol" as it_mapping
 
 ## Variable Types and assign value ##
 For public state variables, an automatic getter function is generated. 
+State variables can be declared as constant. In this case, they have to be assigned from an expression which is a constant at compile time.  
 
 # boolian #
 bool: values - True or false 
@@ -120,6 +121,24 @@ Solidity provides a way to define new types in the form of structs
  Struct types can be used inside mappings and arrays and they can itself contain mappings and arrays.
  directly access the members of the struct without assigning it to a local variable, as in campaigns[campaignID].amount = 0.
 
+pragma solidity >=0.4.16 <0.6.0;
+contract A {
+    struct Request{
+        string description; 
+        address sender; 
+    }
+    Request[] public requests; 
+    function createRequest(string memory _description) public payable {
+        
+        Request memory newRequest = Request({
+            description: _description, 
+            sender: msg.sender 
+        });
+        requests.push(newRequest); 
+    }
+    
+}
+
 ##### Reference ######
 Reference types comprise structs, arrays and mappings
 
@@ -163,17 +182,46 @@ In contrast, --a and ++a have the same effect on a but return the value after th
         
  # Conversions #
  
-## Contract ## 
+####### Contract ####### 
 Class:Contracts in Solidity are similar to classes. 
 Contents: They contain persistent data in state variables and functions that can modify these variables.Each contract can contain declarations of State Variables, Functions, Function Modifiers, Events, Struct Types and Enum Types.
 Inherit: Contracts can inherit from other contracts.
 Creation: Contracts can be created “from outside” via Ethereum transactions or from within Solidity contracts.
 Constructor: When a contract is created, its function constructor is executed once.(onstructor is optional. one constructor is allowed)
 Deployment: This code includes all public and external functions and all functions that are reachable from there through function calls. The deployed code does not include the constructor code or internal functions only called from the constructor.
+Visibility:Everything that is inside a contract is visible to all observers external to the blockchain. Making something private only prevents other contracts from accessing and modifying the information.
 
-There are also special kinds of contracts called 
-libraries 
-interfaces
+# Abstract Contracts # 
+Contracts are marked as abstract when at least one of their functions lacks an implementation as in the following example (note that the function declaration header is terminated by ;):
+pragma solidity >=0.4.0 <0.6.0;
+contract Feline {
+    function utterance() public returns (bytes32);
+}
+Such contracts cannot be compiled, but they can be used as base contracts:
+
+# Interfaces #
+Interfaces are similar to abstract contracts, but they cannot have any functions implemented. There are further restrictions:
+They cannot inherit other contracts or interfaces.
+All declared functions must be external.
+They cannot declare a constructor.
+They cannot declare state variables.
+pragma solidity >=0.5.0 <0.6.0;
+
+interface Token {
+    enum TokenType { Fungible, NonFungible }
+    struct Coin { string obverse; string reverse; }
+    function transfer(address recipient, uint amount) external;
+}
+Contracts can inherit interfaces as they would inherit other contracts.
+
+Types defined inside interfaces and other contract-like structures can be accessed from other contracts: Token.TokenType or Token.Coin.
+
+# Libraries # 
+Libraries are similar to contracts, but their purpose is that they are deployed only once at a specific address
+if library functions are called, their code is executed in the context of the calling contract, i.e. this points to the calling contract, and especially the storage from the calling contract can be accessed. 
+
+-- Need More clarifications -- 
+
 
 # Visibility and Getters #
 
@@ -183,8 +231,8 @@ Functions are the executable units of code within a contract.
 function (<parameter types>) {internal|external} [pure|view|payable] [returns (<return types>)]
 
 Using pure and view functions allows these functions to consume zero gas, because they are not modifying state. 
-- View: view if your function does not modify storage
-- Pure: In Solidity pure functions are functions, that are promised not to modify or read the state.
+- View: Functions can be declared view in which case they promise not to modify the state.
+- Pure: Functions can be declared pure in which case they promise not to read from or modify the state.
 - Payable: if a function is payable, this means that it also accepts a payment of zero Ether, a non-payable function will reject Ether sent to it.
 
 Functions have to be specified as being external, public, internal or private 
@@ -202,18 +250,121 @@ contract Selector {
   }
 }
 
+# Getter Functions #
+The compiler automatically creates getter functions for all public state variables.
+The getter functions have external visibility. If the symbol is accessed internally, it evaluates to a state variable. 
+If it is accessed externally (i.e. with this.), it evaluates to a function.
+If you have a public state variable of array type, then you can only retrieve single elements of the array via the generated getter function.
+
+pragma solidity >=0.4.0 <0.6.0;
+contract C {
+    uint public data;
+    function x() public returns (uint) {
+        data = 3; // internal access
+        return this.data(); // external access
+    }
+}
+
+# Function Modifer #
+Modifiers can be used to easily change the behaviour of functions. For example, they can automatically check a condition prior to executing the function. 
+Modifiers are inheritable properties of contracts and may be overridden by derived contracts.
+
+   modifier onlyOwner {
+        require(
+            msg.sender == owner,
+            "Only owner can call this function."
+        );
+        _;
+    }
+
+Function return variables are declared with the same syntax after the returns keyword.
+
+# Fallback Function #
+A contract can have exactly one unnamed function. This function cannot have arguments, cannot return anything and has to have external visibility.
+ this function is executed whenever the contract receives plain Ether (without data). 
+ can still use msg.data to retrieve any payload supplied with the call.
+ 
+ function() external { x = 1; }
+ function() external payable { }
+ 
+return variables and then leave the function using return
+Returning Multiple Values: When a function has multiple return types, the statement return (v0, v1, ..., vn) can be used to return multiple values. vn) can return multiple values. The number of components must be the same as the number of return types.
+
+# Function Overloading #
+A contract can have multiple functions of the same name but with different parameter types. 
+This process is called “overloading” and also applies to inherited functions. 
+
+pragma solidity >=0.4.16 <0.6.0;
+contract A {
+    function f(uint _in) public pure returns (uint out) {
+        out = _in;
+    }
+
+    function f(uint _in, bool _really) public pure returns (uint out) {
+        if (_really)
+            out = _in;
+    }
+}
+
+# Event #
+Solidity events give an abstraction on top of the EVM’s logging functionality
+The Log and its event data is not accessible from within contracts
 
 
+# Built in Functions #
+built-in functions keccak256, sha256, ripemd160, ecrecover, addmod and mulmod 
+- Hash Function 
+bytes32 constant public myHash = keccak256("abc");
 
 
+# Inheritance # 
+Solidity supports multiple inheritance including polymorphism.
+All function calls are virtual, which means that the most derived function is called, except when the contract name is explicitly given or the super keyword is used.
+
+pragma solidity >0.4.99 <0.6.0;
+contract owned {
+    constructor() public { owner = msg.sender; }
+    address payable owner;
+}
+contract mortal is owned {
+    function kill() public {
+        if (msg.sender == owner) selfdestruct(owner);
+    }
+}
+
+# Constructors #
+A constructor is an optional function declared with the constructor keyword which is executed upon contract creation, and where the contract initialisation code is executed.
+Before the constructor code is executed, state variables are initialised to their specified value 
+After the constructor has run, the final code of the contract is deployed to the blockchain. The deployment of the code costs additional gas linear to the length of the code.
+Constructor functions can be either public or internal. If there is no constructor, the contract will assume the default constructor, which is equivalent to constructor() public {}.
+
+Arguments for Base Constructors
+The constructors of all the base contracts will be called following the linearization rules explained below. If the base constructors have arguments, derived contracts need to specify all of them. This can be done in two ways:
+
+pragma solidity >=0.4.22 <0.6.0;
+
+contract Base {
+    uint x;
+    constructor(uint _x) public { x = _x; }
+}
+
+// Either directly specify in the inheritance list...
+contract Derived1 is Base(7) {
+    constructor() public {}
+}
+
+// or through a "modifier" of the derived constructor.
+contract Derived2 is Base {
+    constructor(uint _y) Base(_y * _y) public {}
+}
 
 
-
-
-
-
-
-
+Useful Commands:
+address(this).balance or <address>.balance 
+msg.sig 
+msg.data
+bytes32 constant public myHash = keccak256("abc"); //hasing 
+if (msg.sender == owner) selfdestruct(owner);
 
 
 
