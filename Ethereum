@@ -9,6 +9,21 @@ import "filename";
 import * as symbolName from "filename";
 import "github.com/ethereum/dapp-bin/library/iterable_mapping.sol" as it_mapping;
 
+Eample: 
+file 1: - library.sol
+pragma solidity ^0.4.17; 
+
+contract Libraries{
+    function test(){}
+}
+
+File 2: - userLibrary.sol
+
+pragma solidity ^0.4.17; 
+import "browser/library.sol";
+contract useLibraries is Libraries{
+    
+}
 
 ## Comments -- like JavaScript ##
 //, /* commented text */ 
@@ -316,6 +331,19 @@ contract A {
 Solidity events give an abstraction on top of the EVM’s logging functionality
 The Log and its event data is not accessible from within contracts
 
+pragma solidity ^0.4.17;
+
+contract testEvent{
+    event logSenderAddress(address);
+    event logValue(uint);
+    
+    function () public payable{
+        logSenderAddress(msg.sender);
+        logValue(msg.value);
+    }
+    
+    
+}
 
 # Built in Functions #
 built-in functions keccak256, sha256, ripemd160, ecrecover, addmod and mulmod 
