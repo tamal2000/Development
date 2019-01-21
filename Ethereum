@@ -189,6 +189,40 @@ Mapping and dynamically-sized array types use a Keccak-256 hash computation to f
 These starting positions are always full stack slots.
 Array data is located at keccak256(p)
 the value corresponding to a mapping key k is located at keccak256(k . p) where . is concatenation
+Example: 
+
+pragma solidity >=0.4.0 <0.6.0;
+
+contract mappingTest{
+  
+    struct scheme {
+        uint amount;
+        string name; 
+    }
+    mapping (address => scheme) schemes; 
+    address[] schemeList;
+    
+    function setScheme(string _name) public payable {
+        
+        scheme memory NewScheme = scheme({
+            amount: msg.value, 
+            name:_name
+        }); 
+        schemes[msg.sender] = NewScheme;
+        schemeList.push(msg.sender) -1;
+    
+    }
+    
+    function getSchemeList() public view returns(address[]){
+        return schemeList;
+    }
+    
+    function getScheme(address ins) view public returns (uint, string) {
+        return (schemes[ins].amount, schemes[ins].name);
+    }
+    
+}
+
 
 # Operator #
 a += e is equivalent to a = a + e. 
