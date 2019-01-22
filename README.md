@@ -1,8 +1,8 @@
 # Learning Plan for 2019
 
 Ethereum:
--> Solidity - basic 
--> Web3.js & Web3.py 
+Solidity - basic 
+Web3.js & Web3.py 
 
 Foundation:
 HTML5 - good  
@@ -19,6 +19,7 @@ React
 Bootstrap
 Django
 Ionic
+IPFS
 
 Tools:
 JSX
