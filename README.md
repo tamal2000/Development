@@ -17,6 +17,7 @@ Go
 Framework: 
 React
 Bootstrap
+Vuj
 Django
 Ionic
 IPFS
